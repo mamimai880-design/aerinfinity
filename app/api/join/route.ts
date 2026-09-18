@@ -32,10 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please enter a valid Discord user ID." }, { status: 400 });
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const messagePayload = {
       username: "Aer Infinity Recruitment",
       embeds: [{
         title: "New crew application",
@@ -58,8 +55,28 @@ export async function POST(request: Request) {
           { type: 2, style: 4, label: "Reject", custom_id: `application:reject:${application.discordId}` },
         ],
       }],
-    }),
-  });
+  };
+
+  const botToken = process.env.DISCORD_BOT_TOKEN;
+  let response: Response;
+  if (botToken) {
+    const webhookInfo = await fetch(webhookUrl, { headers: { Authorization: `Bot ${botToken}` } });
+    const { channel_id: channelId } = await webhookInfo.json() as { channel_id?: string };
+    if (!webhookInfo.ok || !channelId) {
+      return NextResponse.json({ error: "The recruitment channel could not be found." }, { status: 502 });
+    }
+    response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "New Aer Infinity crew application", embeds: messagePayload.embeds, components: messagePayload.components }),
+    });
+  } else {
+    response = await fetch(`${webhookUrl}?wait=true`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(messagePayload),
+    });
+  }
 
   if (!response.ok) {
     return NextResponse.json({ error: "The application could not be delivered. Please try again later." }, { status: 502 });
