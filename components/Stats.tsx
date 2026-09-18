@@ -1,0 +1,2 @@
+import { site } from "@/data/site";
+export default function Stats() { return <div className="grid grid-cols-2 border-y border-white/10 md:grid-cols-4">{site.stats.map(([value, label]) => <div key={label} className="border-r border-white/10 px-4 py-7 last:border-0 md:px-7"><p className="display-font text-3xl text-[#f4f8fc] md:text-4xl">{value}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.17em] text-[#71859b]">{label}</p></div>)}</div>; }

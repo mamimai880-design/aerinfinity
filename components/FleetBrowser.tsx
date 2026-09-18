@@ -1,0 +1,5 @@
+"use client";
+import { useState } from "react";
+import { aircraft } from "@/data/aircraft";
+import AircraftCard from "./AircraftCard";
+export default function FleetBrowser() { const [filter, setFilter] = useState("All"); const families = ["All", "Airbus", "Boeing"]; const shown = filter === "All" ? aircraft : aircraft.filter((item) => item.family === filter); return <><div className="mb-8 flex flex-wrap gap-2">{families.map((family) => <button key={family} onClick={() => setFilter(family)} className={`border px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${filter === family ? "border-[#54d5ff] bg-[#54d5ff] text-[#06111f]" : "border-white/15 text-[#95a9bf] hover:border-[#54d5ff] hover:text-white"}`}>{family}</button>)}</div><div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{shown.map((item) => <AircraftCard key={item.slug} item={item} />)}</div></>; }

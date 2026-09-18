@@ -1,0 +1,3 @@
+import Shell from "@/components/Shell";
+import JoinForm from "@/components/JoinForm";
+export default function Join() { return <Shell><main className="section-pad pt-40"><div className="mb-12 max-w-3xl"><p className="eyebrow mb-5">Recruitment / open cockpit</p><h1 className="display-font text-7xl leading-[.88] md:text-9xl">Your flight<br /><span className="text-[#54d5ff]">starts here.</span></h1><p className="mt-8 max-w-xl text-lg leading-8 text-[#95a9bf]">Pilots, aviation enthusiasts, photographers, dispatchers, and roleplay members are all welcome aboard.</p></div><JoinForm /></main></Shell>; }

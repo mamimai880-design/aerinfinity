@@ -1,0 +1,1 @@
+export default function SectionHeader({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) { return <div className="mb-12 max-w-2xl"><p className="eyebrow mb-4">{eyebrow}</p><h2 className="display-font text-4xl leading-[.98] text-[#f4f8fc] md:text-6xl">{title}</h2>{text && <p className="mt-5 max-w-xl text-base leading-7 text-[#95a9bf]">{text}</p>}</div>; }

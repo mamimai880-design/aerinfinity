@@ -1,0 +1,4 @@
+export type Aircraft = { slug: string; name: string; manufacturer: string; capacity: string; range: string; speed: string; role: string; status: string; image: string; family: string; count: number; notes: string; };
+export const aircraft: Aircraft[] = [
+  { slug: "a320-200", name: "Airbus A320-200", manufacturer: "Airbus", capacity: "Passenger aircraft", range: "3,300 nm", speed: "Mach 0.78", role: "Initial fleet platform", status: "In service · 2", family: "Airbus", count: 2, notes: "Aer Infinity's first aircraft type, supporting early domestic and regional operations from Kansai International Airport.", image: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=1200&q=80" },
+];
