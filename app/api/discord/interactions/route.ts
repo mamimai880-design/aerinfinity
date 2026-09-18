@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { InteractionResponseType, InteractionType, verifyKey } from "discord-interactions";
+import { getFlightBrief } from "@/lib/flight-brief";
 
 type Interaction = {
   type: number;
@@ -30,6 +31,14 @@ export async function POST(request: Request) {
 
   if (interaction.type === InteractionType.PING) {
     return NextResponse.json({ type: InteractionResponseType.PONG });
+  }
+
+  if (interaction.type === InteractionType.MESSAGE_COMPONENT && interaction.data?.custom_id?.startsWith("flightbrief:")) {
+    const [, origin, destination, city, depart, tripType] = interaction.data.custom_id.split(":");
+    const brief = await getFlightBrief({ origin, destination, city, depart, tripType });
+    const weather = brief.weather.date ? `Forecast: ${brief.weather.date.min}–${brief.weather.date.max}°C · rain ${brief.weather.date.rain}% · wind ${brief.weather.date.wind} km/h` : "Current weather available";
+    const flights = brief.aviation.flights?.join("\n") || "Aviationstack key not configured; use the planning schedule.";
+    return NextResponse.json({ type: InteractionResponseType.UPDATE_MESSAGE, data: { content: "Flight brief generated for staff.", embeds: [{ title: `${origin} -> ${destination} flight brief`, color: 5594623, fields: [{ name: "Weekly interest", value: `${brief.requests} requests · ${brief.passengers} passengers`, inline: true }, { name: "Estimated route pay", value: `$${brief.estimatedPay} total · $${brief.fare} per passenger`, inline: true }, { name: "Takeoff weather", value: weather }, { name: "Flight data", value: flights }], footer: { text: "Aer Infinity operations brief" }, timestamp: new Date().toISOString() }], components: [{ type: 1, components: [{ type: 2, style: 2, label: "Brief generated", custom_id: `flightbrief:done:${origin}:${destination}`, disabled: true }] }] } });
   }
 
   if (interaction.type !== InteractionType.MESSAGE_COMPONENT || !interaction.data?.custom_id?.startsWith("application:")) {
