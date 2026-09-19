@@ -4,7 +4,7 @@ import { getFlightBrief } from "@/lib/flight-brief";
 
 type Interaction = {
   type: number;
-  data?: { custom_id?: string };
+  data?: { name?: string; custom_id?: string; options?: Array<{ name?: string; value?: string }> };
   message?: { embeds?: unknown[] };
 };
 
@@ -33,6 +33,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ type: InteractionResponseType.PONG });
   }
 
+  if (interaction.type === InteractionType.APPLICATION_COMMAND && interaction.data?.name === "flightbrief") {
+    const options = Object.fromEntries((interaction.data.options || []).map((option) => [option.name, option.value]));
+    const origin = String(options.origin || "KIX");
+    const destination = String(options.destination || "HND");
+    const city = String(options.city || "Tokyo");
+    const depart = String(options.date || new Date().toISOString().slice(0, 10));
+    const tripType = String(options.trip || "roundtrip");
+    const brief = await getFlightBrief({ origin, destination, city, depart, tripType });
+    return briefResponse(origin, destination, city, depart, tripType, brief);
+  }
+
   if (interaction.type === InteractionType.MESSAGE_COMPONENT && interaction.data?.custom_id?.startsWith("flightbrief:")) {
     const [, origin, destination, city, depart, tripType] = interaction.data.custom_id.split(":");
     const action = interaction.data.custom_id.split(":")[6];
@@ -43,7 +54,7 @@ export async function POST(request: Request) {
     const brief = await getFlightBrief({ origin, destination, city, depart, tripType });
     const weather = brief.weather.date ? `Forecast: ${brief.weather.date.min}–${brief.weather.date.max}°C · rain ${brief.weather.date.rain}% · wind ${brief.weather.date.wind} km/h` : "Current weather available";
     const flights = brief.aviation.flights?.join("\n") || "Aviationstack key not configured; use the planning schedule.";
-    return NextResponse.json({ type: InteractionResponseType.UPDATE_MESSAGE, data: { content: "Flight brief generated for staff.", embeds: [{ title: `${origin} -> ${destination} flight brief`, color: 5594623, fields: [{ name: "Weekly interest", value: `${brief.requests} requests · ${brief.passengers} passengers`, inline: true }, { name: "Estimated route pay", value: `$${brief.estimatedPay} total · $${brief.fare} per passenger`, inline: true }, { name: "Takeoff weather", value: weather }, { name: "Flight data", value: flights }], footer: { text: "Aer Infinity operations brief" }, timestamp: new Date().toISOString() }], components: [{ type: 1, components: [{ type: 2, style: 3, label: "Approve route", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:approve` }, { type: 2, style: 4, label: "Reject route", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:reject` }, { type: 2, style: 2, label: "Refresh data", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:refresh` }] }] } });
+    return briefResponse(origin, destination, city, depart, tripType, brief, InteractionResponseType.UPDATE_MESSAGE);
   }
 
   if (interaction.type !== InteractionType.MESSAGE_COMPONENT || !interaction.data?.custom_id?.startsWith("application:")) {
@@ -79,6 +90,12 @@ export async function POST(request: Request) {
       ] }],
     },
   });
+}
+
+function briefResponse(origin: string, destination: string, city: string, depart: string, tripType: string, brief: Awaited<ReturnType<typeof getFlightBrief>>, responseType = InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE) {
+  const weather = brief.weather.date ? `Forecast: ${brief.weather.date.min}–${brief.weather.date.max}°C · rain ${brief.weather.date.rain}% · wind ${brief.weather.date.wind} km/h` : "Current weather available";
+  const flights = brief.aviation.flights?.join("\n") || "Aviationstack key not configured; use the planning schedule.";
+  return NextResponse.json({ type: responseType, data: { content: "Flight brief generated for staff.", embeds: [{ title: `${origin} -> ${destination} flight brief`, color: 5594623, fields: [{ name: "Weekly interest", value: `${brief.requests} requests · ${brief.passengers} passengers`, inline: true }, { name: "Estimated route pay", value: `$${brief.estimatedPay} total · $${brief.fare} per passenger`, inline: true }, { name: "Takeoff weather", value: weather }, { name: "Flight data", value: flights }], footer: { text: "Aer Infinity operations brief" }, timestamp: new Date().toISOString() }], components: [{ type: 1, components: [{ type: 2, style: 3, label: "Approve route", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:approve` }, { type: 2, style: 4, label: "Reject route", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:reject` }, { type: 2, style: 2, label: "Refresh data", custom_id: `flightbrief:${origin}:${destination}:${city}:${depart}:${tripType}:refresh` }] }] } });
 }
 
 async function discordRequest(path: string, token: string, body: Record<string, string>) {
